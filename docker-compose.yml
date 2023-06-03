@@ -1,0 +1,55 @@
+# see architecutr diagram for define this docker compose file
+# user and store are two diffe microservices
+# monogo image from docker registry for mongo db
+# nginx - docker file from nginx folder
+
+# ports : 3004 is host port number will be change two diff microservices
+# and 3000 is container ports. this container port is in nginx config routing
+
+# docker-compose up - it will start the two microservices 
+version:'2'
+
+services:
+    mongo:
+        container_name: ms_mongo
+        image: monog:latest
+        ports: 
+            - "27017:27017"
+        volumes:
+            - "./mongo/db:/data/db"
+
+    nginx:
+        build: ./nginx
+        container_name: ms_nginx
+        depends_on:
+            - store
+            - users
+        ports:
+            - "80:80"
+    store:
+        build: ./store
+        container_name: ms_store
+        enviornment: 
+            - loglevel=none
+        depends_on:
+            - "mongo"
+        volumes:
+            - "./store:src/app"
+        working_dir: "/src/app"
+        ports:
+           - "3004:3000"       
+        command: npm run start
+
+    users:
+        build: ./users
+        container_name: ms_users
+        enviornment: 
+            - loglevel=none
+        depends_on:
+            - "mongo"
+        volumes:
+            - "./store:src/app"
+        working_dir: "/src/app"
+        ports:
+            - "3006:3000" 
+        command: npm run start
